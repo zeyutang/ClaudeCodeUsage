@@ -25,6 +25,14 @@ upstream release: 1.0.8). Format follows [Keep a Changelog](https://keepachangel
   are credited as development tools, separately from human contributors.
 
 ### Fixed
+- **Usage dashboard no longer blanks on one oversized non-transcript file** — a
+  single `.jsonl` with more than 1 MiB of leading lines that carry no
+  `timestamp` (such as a large workflow `journal.jsonl`, whose records hold
+  `type`/`key`/`result`/`agentId` and never a timestamp) made the
+  earliest-timestamp probe throw `TimestampProbeLimitError`. That rejection was
+  unhandled, so it aborted the whole load and left the dashboard empty on every
+  refresh (`failed=1`, `bytes=0` in diagnostics). The probe now fails soft for
+  that one file and the rest load normally.
 - **Opus 5 context window** — `claude-opus-5` reported a 200 000-token window
   as if it were exact, so the status bar and dashboard showed a context
   percentage five times too high. Claude Code writes the plain `claude-opus-5`
