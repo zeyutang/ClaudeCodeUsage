@@ -41,6 +41,9 @@ upstream release: 1.0.8). Format follows [Keep a Changelog](https://keepachangel
 - **Reset times read to the minute** — they were shown truncated to the second,
   so a cap resetting at 16:59:59 displayed as "16:59" while the cap it resets
   alongside displayed "17:00".
+- **Quota warns at the same points as the official Claude app.**
+  The quota indicator and every bar in its tooltip now turn amber at 75% and red at 90%, instead of 80% and 95%.
+  The context-window indicator keeps the earlier 80% and 95% steps.
 
 ## [2.2.2] — Unreleased
 

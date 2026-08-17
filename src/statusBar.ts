@@ -2,11 +2,16 @@ import * as vscode from 'vscode';
 import { ClaudeApiUsageResponse, ContextWindowInfo, UsageData } from './types';
 import { I18n } from './i18n';
 import {
+  CONTEXT_FILL_THRESHOLDS,
+  QUOTA_FILL_THRESHOLDS,
+  fillLevel,
   formatMonthlyReset,
   formatQuotaStatusText,
   formatResetCell,
   formatSharePercent,
   worstShownUtilisation,
+  FillLevel,
+  FillThresholds,
   QuotaStatusOptions,
   ResetCountdownFormat
 } from './quotaFormat';
@@ -201,14 +206,9 @@ export class StatusBarManager {
     const approx = info.estimated ? '~' : '';
     this.contextItem.text = `$(layers) ${approx}${Math.round(pct)}%`;
 
-    // Same thresholds as the quota item: amber at 80%, red at 95%.
-    if (pct >= 95) {
-      this.contextItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-    } else if (pct >= 80) {
-      this.contextItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    } else {
-      this.contextItem.backgroundColor = undefined;
-    }
+    // Amber at 80%, red at 95% — see CONTEXT_FILL_THRESHOLDS for why this no
+    // longer matches the quota item.
+    this.contextItem.backgroundColor = this.fillBackground(fillLevel(pct, CONTEXT_FILL_THRESHOLDS));
 
     const t = I18n.t.popup;
     const md = new vscode.MarkdownString();
@@ -222,7 +222,7 @@ export class StatusBarManager {
     const freeSpace = Math.max(0, info.windowTokens - info.contextTokens);
     const num = (n: number): string => I18n.formatNumber(n);
     let html = '<table>';
-    html += `<tr><td>${this.progressBarSvg(pct, 30)}</td><td align="right"><b>${pct.toFixed(1)}%</b></td></tr>`;
+    html += `<tr><td>${this.progressBarSvg(pct, 30, CONTEXT_FILL_THRESHOLDS)}</td><td align="right"><b>${pct.toFixed(1)}%</b></td></tr>`;
     html += `<tr><td>${t.inputTokens}</td><td align="right">${num(info.inputTokens)}</td></tr>`;
     html += `<tr><td>${t.cacheRead}</td><td align="right">${num(info.cacheReadTokens)}</td></tr>`;
     html += `<tr><td>${t.cacheCreation}</td><td align="right">${num(info.cacheCreationTokens)}</td></tr>`;
@@ -268,14 +268,9 @@ export class StatusBarManager {
 
     this.quotaItem.text = `$(dashboard) ${text}`;
 
-    // Stay quiet until usage actually gets high.
-    if (worstPct >= 95) {
-      this.quotaItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-    } else if (worstPct >= 80) {
-      this.quotaItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    } else {
-      this.quotaItem.backgroundColor = undefined;
-    }
+    // Stay quiet until usage actually gets high (amber at 75%, red at 90%, as
+    // the official Claude app does — QUOTA_FILL_THRESHOLDS).
+    this.quotaItem.backgroundColor = this.fillBackground(fillLevel(worstPct, QUOTA_FILL_THRESHOLDS));
 
     this.quotaItem.tooltip = this.createQuotaTooltip(live, creditsFromUsage(usageLimits));
     this.quotaItem.show();
@@ -458,6 +453,18 @@ export class StatusBarManager {
     );
   }
 
+  /** Status-bar item background for a fill level. Kept beside the bar colours
+   * below so the two signals for one indicator can only be changed together. */
+  private fillBackground(level: FillLevel): vscode.ThemeColor | undefined {
+    if (level === 'error') {
+      return new vscode.ThemeColor('statusBarItem.errorBackground');
+    }
+    if (level === 'warning') {
+      return new vscode.ThemeColor('statusBarItem.warningBackground');
+    }
+    return undefined;
+  }
+
   /** Progress bar: nested <span>s with solid background colours so the
    * sanitiser keeps everything we need. The outer span paints the full
    * 100% track in solid medium gray (#bbb) — visible on both light and
@@ -465,15 +472,19 @@ export class StatusBarManager {
    * The inner span paints the filled portion in colour, sitting on top of
    * the gray track.
    *
-   * Bar colour mirrors the status-bar warning/error thresholds (amber at
-   * >=80%, red at >=95%) so the visual signal matches the indicator. */
-  private progressBarSvg(pct: number, total: number = 24): string {
+   * `thresholds` decides where amber and red begin, so a bar always agrees with
+   * the background of the item it belongs to. Quota and context deliberately
+   * pass different pairs — see QUOTA_FILL_THRESHOLDS. */
+  private progressBarSvg(pct: number, total: number = 24, thresholds: FillThresholds = QUOTA_FILL_THRESHOLDS): string {
     const TOTAL = total;
     const filled = Math.max(0, Math.min(TOTAL, Math.round((pct / 100) * TOTAL)));
     const empty = TOTAL - filled;
-    let color = '#4caf50';                    // green
-    if (pct >= 95) { color = '#f44336'; }     // red
-    else if (pct >= 80) { color = '#ff9800'; } // amber
+    const level = fillLevel(pct, thresholds);
+    const color = level === 'error'
+      ? '#f44336'                             // red
+      : level === 'warning'
+        ? '#ff9800'                           // amber
+        : '#4caf50';                          // green
     const nbsp = (n: number) => '&nbsp;'.repeat(n);
     return (
       `<span style="background-color:#bbbbbb;font-size:48%;border-radius:3px;">` +
