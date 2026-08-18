@@ -20,10 +20,8 @@ upstream release: 1.0.8). Format follows [Keep a Changelog](https://keepachangel
   Indonesian entry showed English text in the settings panel.
 
 ### Added
-- **Usage credits in the quota tooltip** — the amount spent this month against
-  your cap, and the date it resets, once you have actually spent some. The figure
-  stays visible after you switch credits off, since the spend already happened,
-  and it copes with a cap you have raised, lowered, or removed entirely.
+- **Usage credits in the quota tooltip** — the amount spent this month and the date it resets, once you have actually spent some.
+  The figure stays visible after you switch credits off, since the spend already happened.
 
 ### Changed
 - **`showOpusWeekly` is now `showScopedWeekly`** — the setting no longer names a

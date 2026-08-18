@@ -393,12 +393,9 @@ export class StatusBarManager {
       );
     }
     if (credits && credits.used > 0) {
-      // The amount rather than a percentage: the cap is user-adjustable and may
-      // be unlimited, so a share of it says little.
-      const spent = this.formatCreditAmount(credits.used, credits.currency);
-      const amount = credits.limit === null
-        ? spent
-        : `${spent} / ${this.formatCreditAmount(credits.limit, credits.currency)}`;
+      // Only the spent amount: the cap is user-adjustable and may be unlimited,
+      // so neither a share of it nor the cap itself says much beside the spend.
+      const amount = this.formatCreditAmount(credits.used, credits.currency);
       md.appendMarkdown(
         this.creditsRowHtml(t.quotaCredits, amount, formatMonthlyReset(credits.resetsAt))
       );
