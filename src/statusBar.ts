@@ -394,19 +394,13 @@ export class StatusBarManager {
     }
     if (credits && credits.used > 0) {
       // The amount rather than a percentage: the cap is user-adjustable and may
-      // be unlimited, so a share of it says little. The bar still tracks the cap
-      // whenever there is a finite one.
+      // be unlimited, so a share of it says little.
       const spent = this.formatCreditAmount(credits.used, credits.currency);
       const amount = credits.limit === null
         ? spent
         : `${spent} / ${this.formatCreditAmount(credits.limit, credits.currency)}`;
       md.appendMarkdown(
-        this.quotaRowHtml(
-          t.quotaCredits,
-          amount,
-          credits.percent ?? 0,
-          formatMonthlyReset(credits.resetsAt)
-        )
+        this.creditsRowHtml(t.quotaCredits, amount, formatMonthlyReset(credits.resetsAt))
       );
     }
     md.appendMarkdown(`</table>\n\n*${t.quotaHint}*`);
@@ -448,6 +442,22 @@ export class StatusBarManager {
       `<td align="left"><b>${label}</b></td>` +
       `<td>${bar}</td>` +
       `<td align="right">${shares}</td>` +
+      `<td align="right">&nbsp;&nbsp;${resets}</td>` +
+      `</tr>\n`
+    );
+  }
+
+  /** The credits row carries no bar (the figure is an amount of money, not a
+   * share of a fixed cap), so its value spans the bar and share columns,
+   * left-aligned to start where the bars start. Parking the amount in the
+   * right-aligned share column instead stretched that column to the amount's
+   * width, pushing every percentage away from its bar the moment credits
+   * appeared. */
+  private creditsRowHtml(label: string, amount: string, resets: string): string {
+    return (
+      `<tr>` +
+      `<td align="left"><b>${label}</b></td>` +
+      `<td colspan="2" align="left">${amount}</td>` +
       `<td align="right">&nbsp;&nbsp;${resets}</td>` +
       `</tr>\n`
     );
