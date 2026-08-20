@@ -20,10 +20,8 @@ upstream release: 1.0.8). Format follows [Keep a Changelog](https://keepachangel
   Indonesian entry showed English text in the settings panel.
 
 ### Added
-- **Usage credits in the quota tooltip** — the amount spent this month against
-  your cap, and the date it resets, once you have actually spent some. The figure
-  stays visible after you switch credits off, since the spend already happened,
-  and it copes with a cap you have raised, lowered, or removed entirely.
+- **Usage credits in the quota tooltip** — the amount spent this month and the date it resets, once you have actually spent some.
+  The figure stays visible after you switch credits off, since the spend already happened.
 
 ### Changed
 - **`showOpusWeekly` is now `showScopedWeekly`** — the setting no longer names a
@@ -41,6 +39,9 @@ upstream release: 1.0.8). Format follows [Keep a Changelog](https://keepachangel
 - **Reset times read to the minute** — they were shown truncated to the second,
   so a cap resetting at 16:59:59 displayed as "16:59" while the cap it resets
   alongside displayed "17:00".
+- **Quota warns at the same points as the official Claude app.**
+  The quota indicator and every bar in its tooltip now turn amber at 75% and red at 90%, instead of 80% and 95%.
+  The context-window indicator keeps the earlier 80% and 95% steps.
 
 ## [2.2.2] — Unreleased
 
